@@ -82,3 +82,9 @@ To enforce the **Principle of Least Privilege (PoLP)** and prevent administrativ
 * **Privileged Identity Management (PIM):** Combined with the schema extension attribute `adminExpirationDate`, elevated roles are tagged for periodic access certification or automatic revocation, avoiding permanent standing privileges.
 
 
+## 6. Automated Privilege Decay & Governance Enforcement
+
+To mitigate permanent standing access and enforce administrative lease boundaries, `Revoke-OktaAdminAuthority.ps1` runs periodic audits against Okta directory assignments:
+
+1. **Contract Expiration Checks:** Identifies identities where `contractEndDate <= Today` and invokes the Okta deactivation lifecycle endpoint (`/api/v1/users/{id}/lifecycle/deactivate`).
+2. **Privileged Access Revocation:** Evaluates assigned admin leases against `adminExpirationDate`. When an administrative lease lapses, the engine enumerates assigned roles (`/api/v1/users/{id}/roles`) and sends an HTTP `DELETE` call to strip elevated authority while preserving the user's core identity.
