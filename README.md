@@ -103,7 +103,7 @@ Following execution, the directory state was audited via the Okta Admin API to v
 
 ## 5. Dynamic RBAC & Automated Group Synchronization
 
-To enforce scalable access provisioning, `Sync-OktaRBAC.ps1` dynamically creates target security groups in Okta and evaluates identities based on department and contractor classifications.
+To enforce scalable access provisioning, `Grouping-OktaRBAC.ps1` dynamically creates target security groups in Okta and evaluates identities based on department and contractor classifications.
 
 ### Execution Log: Automated Group Membership
 ```text
@@ -134,7 +134,7 @@ RBAC SYNCHRONIZATION COMPLETE
 ### Downstream SSO & Application Assignment
 Directly assigning individual users to SaaS applications creates operational debt and access sprawl. Access was instead scoped at the group level:
 * **Group-Based App Delivery:** Target applications (e.g., Bookmark / Internal Portal) are bound directly to the automated `Dept-IT` security group.
-* **Zero-Touch Provisioning:** As users transition into the IT department via the HR feed, `Sync-OktaRBAC.ps1` places them into `Dept-IT`, automatically granting application Single Sign-On (SSO) downstream without manual admin intervention.
+* **Zero-Touch Provisioning:** As users transition into the IT department via the HR feed, `Grouping-OktaRBAC.ps1` places them into `Dept-IT`, automatically granting application Single Sign-On (SSO) downstream without manual admin intervention.
 
 ---
 
