@@ -46,3 +46,22 @@ Extending the schema at the directory level ensures that the REST API payload is
 * **Operational Constraint:** Initial API token creation failed during service principal setup due to Okta's mandatory origin-network enforcement (`API calls made with this token must originate from`).
 * **Investigation & Security Principle:** Researching Okta's token governance model highlighted the requirement for **Defense-in-Depth** via **Network Zone IP binding**. Rather than treating API tokens as static bearer secrets, Okta requires privileged tokens to be bound to trusted administrative CIDR ranges or specific egress public IPs. This ensures that even if a token credential were leaked, unauthorized external API invocations from untrusted origins are blocked at the perimeter.
 * **Resolution:** Configured an authorized Okta Network Zone matching the administrative testing gateway, binding the token's origin scope strictly to trusted source IPs before executing automated provisioning calls.
+
+
+  ## 4. Automated Deprovisioning & Zombie Account Mitigation
+
+To eliminate orphaned "zombie" accounts and enforce time-bound governance, `Revoke-StaleOktaUsers.ps1` evaluates directory identities against contract expiration timestamps and revokes access automatically.
+
+### Automated Execution Log
+When executed, the engine queries the directory, parses the schema-extended `contractEndDate`, and triggers Okta's deactivation endpoint (`/api/v1/users/${id}/lifecycle/deactivate`) for expired accounts:
+
+```text
+Evaluating 10 directory accounts against current date...
+
+[ACTIVE]      smarsh@southpark.local contract valid (FTE / Active).
+[EXPIRED]     tblack@southpark.local expired on 2025-08-31. Terminating access...
+[DEACTIVATED] Access successfully revoked for tblack@southpark.local
+[EXPIRED]     cclonovan@southpark.local expired on 2025-08-31. Terminating access...
+[DEACTIVATED] Access successfully revoked for cclonovan@southpark.local
+
+Lifecycle audit complete.
