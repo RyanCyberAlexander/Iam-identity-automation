@@ -50,7 +50,7 @@ foreach ($user in $users) {
 
     # Lifecycle Rule: Map Contractor Expiration Date for time-bound access
     if (-not [string]::IsNullOrWhiteSpace($user.EndDate)) {
-        $profileData["customContractEndDate"] = $user.EndDate
+        $profileData["contractEndDate"] = $user.EndDate
     }
 
     # Least Privilege Governance: Assign time-bound admin expiration
@@ -59,7 +59,7 @@ foreach ($user in $users) {
         if ($user.PrivilegeDurationDays -and [int]::TryParse($user.PrivilegeDurationDays, [ref]$null)) {
             $durationDays = [int]$user.PrivilegeDurationDays
         }
-        $profileData["customAdminExpirationDate"] = (Get-Date).AddDays($durationDays).ToString("yyyy-MM-dd")
+        $profileData["adminExpirationDate"] = (Get-Date).AddDays($durationDays).ToString("yyyy-MM-dd")
     }
 
     $body = @{ profile = $profileData } | ConvertTo-Json -Depth 5
