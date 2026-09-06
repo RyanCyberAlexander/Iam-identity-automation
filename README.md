@@ -42,7 +42,7 @@ Extending the schema at the directory level ensures that the REST API payload is
 > In Okta, the API will reject any user payload containing undeclared profile attributes with an HTTP `400 Bad Request` error. Creating `contractEndDate` and `adminExpirationDate` inside Okta's Profile Editor first is a prerequisite; the directory schema must explicitly recognize these field names before the PowerShell script can write data to them.
 
 
-### 3. Privileged API Governance & Network Zone Allowlisting
+## 3. Privileged API Governance & Network Zone Allowlisting
 * **Operational Constraint:** Initial API token creation failed during service principal setup due to Okta's mandatory origin-network enforcement (`API calls made with this token must originate from`).
 * **Investigation & Security Principle:** Researching Okta's token governance model highlighted the requirement for **Defense-in-Depth** via **Network Zone IP binding**. Rather than treating API tokens as static bearer secrets, Okta requires privileged tokens to be bound to trusted administrative CIDR ranges or specific egress public IPs. This ensures that even if a token credential were leaked, unauthorized external API invocations from untrusted origins are blocked at the perimeter.
 * **Resolution:** Configured an authorized Okta Network Zone matching the administrative testing gateway, binding the token's origin scope strictly to trusted source IPs before executing automated provisioning calls.
