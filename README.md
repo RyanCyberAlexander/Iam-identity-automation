@@ -65,3 +65,20 @@ Evaluating 10 directory accounts against current date...
 [DEACTIVATED] Access successfully revoked for cclonovan@southpark.local
 
 Lifecycle audit complete.
+
+
+## 5. Privileged Access Governance & Granular RBAC Delegation
+
+To enforce the **Principle of Least Privilege (PoLP)** and prevent administrative privilege creep, administrative rights are not granted via monolithic "Super Admin" roles. Instead, identities requiring elevated access are provisioned with granular, role-scoped administrative permissions tied to their functional responsibilities:
+
+| Identity | Username | Delegated Administrative Role | Governance Scope & Security Function |
+|---|---|---|---|
+| **Eric Cartman** | `ecartman@southpark.local` | **Group Membership Administrator** | Scoped to manage group assignments without visibility or rights to modify directory-level policies or credential settings. |
+| **Butters Stotch** | `bstotch@southpark.local` | **Help Desk Administrator** | Scoped to routine tier-1 support operations (e.g., password/MFA resets and user unlocking) without broad tenant configuration access. |
+| **Kenny McCormick** | `kmccormick@southpark.local` | **Read-only Administrator** | Provides audit-level directory visibility for operational inspection while blocking any create, update, or delete actions against directory objects. |
+
+### Architectural Takeaways:
+* **Separation of Duties (SoD):** Granular role assignment prevents horizontal and vertical privilege escalation by ensuring team members only receive the permissions necessary for their direct workflows.
+* **Privileged Identity Management (PIM):** Combined with the schema extension attribute `adminExpirationDate`, elevated roles are tagged for periodic access certification or automatic revocation, avoiding permanent standing privileges.
+
+
