@@ -25,3 +25,18 @@ The schema accounts for core enterprise attributes, contract expiration boundari
 * **Privilege & Least Privilege Flags (`IsAdmin`, `PrivilegeDuration`):** Distinguishes between standard business users and elevated access candidates. Includes temporary privilege duration logic for time-bound contractor access reviews.
 * **Manager Hierarchy (`ManagerEmail`):** Maps reporting lines required for automated access request routing, approval chains, and periodic access certifications.
 * **Intentional Data Quality Edge Cases:** Includes deliberate malformed data (e.g., `invalid-email-placeholder` on ID 1010) and expired contractor dates (e.g., ID 1008) to test script input validation, error handling, and security quarantine workflows.
+
+
+## 3. Okta Directory Schema Extension
+
+By default, standard Okta user profiles only support baseline identity attributes (Name, Email, Department, Title). To enforce lifecycle governance and time-bound access, I extended the Universal Directory schema via the Okta Profile Editor:
+
+| Display Name | Variable Name | Data Type | Governance Function |
+|---|---|---|---|
+| **Contract End Date** | `contractEndDate` | String (ISO 8601) | Ingests contract termination boundaries to automate deprovisioning/suspension for non-FTE identities. |
+| **Admin Expiration Date** | `adminExpirationDate` | String (ISO 8601) | Establishes time-bound privileged access boundaries (e.g., 30-day auto-decay) to enforce least-privilege principles. |
+
+Extending the schema at the directory level ensures that the REST API payload is validated and persisted, enabling downstream group rules and policy deprovisioning workflows.
+
+> **Technical Note / Schema Dependency:**  
+> In Okta, the API will reject any user payload containing undeclared profile attributes with an HTTP `400 Bad Request` error. Creating `contractEndDate` and `adminExpirationDate` inside Okta's Profile Editor first is a prerequisite; the directory schema must explicitly recognize these field names before the PowerShell script can write data to them.
