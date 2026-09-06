@@ -74,7 +74,45 @@ Following execution, the directory state was audited via the Okta Admin API to v
 | **Wendy Testaburger** | `wtestaburger@southpark.local` | Full Stack Engineer (Contractor) | `2026-12-31` | `Pending user action` | Retained (Valid contract) |
 | **Stan Marsh** | `smarsh@southpark.local` | Account Rep (FTE) | None | `Pending user action` | Retained (Active FTE lifecycle) |
 
-## 5. Privileged Access Governance & Granular RBAC Delegation
+
+## 5. Dynamic RBAC & Automated Group Synchronization
+
+To enforce scalable access provisioning, `Sync-OktaRBAC.ps1` dynamically creates target security groups in Okta and evaluates identities based on department and contractor classifications.
+
+### Execution Log: Automated Group Membership
+```text
+STARTING DYNAMIC RBAC & GROUP SYNCHRONIZATION
+==========================================================
+
+[EXISTS] Group 'Dept-Engineering' is ready.
+[EXISTS] Group 'Dept-IT' is ready.
+[EXISTS] Group 'Dept-Finance' is ready.
+[EXISTS] Group 'Dept-Sales' is ready.
+[EXISTS] Group 'Type-Contractors' is ready.
+
+Fetching directory users for group assignment...
+
+[ASSIGNED] kbroflovski@southpark.local -> Dept-Finance
+[ASSIGNED] kmccormick@southpark.local  -> Dept-IT
+[ASSIGNED] kmccormick@southpark.local  -> Type-Contractors
+[ASSIGNED] smarsh@southpark.local      -> Dept-Sales
+[ASSIGNED] bstotch@southpark.local     -> Dept-IT
+[ASSIGNED] ecartman@southpark.local    -> Dept-IT
+[ASSIGNED] wtestaburger@southpark.local -> Dept-Engineering
+[ASSIGNED] wtestaburger@southpark.local -> Type-Contractors
+
+==========================================================
+RBAC SYNCHRONIZATION COMPLETE
+```
+
+### Downstream SSO & Application Assignment
+Directly assigning individual users to SaaS applications creates operational debt and access sprawl. Access was instead scoped at the group level:
+
+* **Group-Based App Delivery:** Target applications (e.g., Bookmark / Internal Portal) are bound directly to the automated `Dept-IT` security group.
+* **Zero-Touch Provisioning:** As users transition into the IT department via the HR feed, `Sync-OktaRBAC.ps1` places them into `Dept-IT`, automatically granting application Single Sign-On (SSO) downstream without manual admin intervention.
+
+
+## 6. Privileged Access Governance & Granular RBAC Delegation
 
 To enforce the **Principle of Least Privilege (PoLP)** and prevent administrative privilege creep, administrative rights are not granted via monolithic "Super Admin" roles. Instead, identities requiring elevated access are provisioned with granular, role-scoped administrative permissions tied to their functional responsibilities:
 
@@ -88,7 +126,8 @@ To enforce the **Principle of Least Privilege (PoLP)** and prevent administrativ
 * **Separation of Duties (SoD):** Granular role assignment prevents horizontal and vertical privilege escalation by ensuring team members only receive the permissions necessary for their direct workflows.
 * **Privileged Identity Management (PIM):** Combined with the schema extension attribute `adminExpirationDate`, elevated roles are tagged for periodic access certification or automatic revocation, avoiding permanent standing privileges.
 
-## 6. Automated Privilege Decay & Governance Enforcement
+
+## 7. Automated Privilege Decay & Governance Enforcement
 
 To mitigate permanent standing access and enforce administrative lease boundaries, `Revoke-OktaAdminAuthority.ps1` runs periodic audits against Okta directory assignments:
 
