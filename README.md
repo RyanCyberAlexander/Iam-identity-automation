@@ -4,6 +4,21 @@ Automated Joiner-Mover-Leaver (JML) identity lifecycle and access governance eng
 
 ---
 
+## Tooling & Core Technologies
+
+| Category | Technology / Standard | Practical Implementation |
+|---|---|---|
+| **Identity Provider (IdP)** | Okta Workforce Identity Cloud | Universal Directory schema extensions, Network Zones, RBAC role assignments, app SSO binding |
+| **Automation & Scripting** | PowerShell 7 / Windows PowerShell | REST payload compilation, regex negative testing, API pagination, error handling |
+| **API Architecture** | Okta Core REST APIs | SSWS token bearer authentication, CRUD operations against `/api/v1/users`, `/api/v1/groups`, and `/api/v1/users/{id}/roles` |
+| **Security Principles** | PoLP, SoD, Defense-in-Depth | Granular administrative roles, automated time-bound privilege decay, origin Network Zone IP allowlisting |
+| **Data & Modeling** | CSV, JSON, ISO 8601 | HR source-of-truth simulation, structured REST payloads, ISO date comparisons for access lifecycles |
+| **Local AI & Privacy** | Ollama (Local LLM Inference) | Air-gapped synthetic HRIS data generation and schema mocking to prevent data exfiltration to public cloud AI endpoints |
+
+
+
+---
+
 ## 1. Identity Data Modeling & HR Source of Truth
 
 To simulate an enterprise identity lifecycle engine (Joiner-Mover-Leaver), I designed a synthetic HRIS dataset generated via a locally hosted LLM endpoint to model real-world employee and contractor lifecycles for automated provisioning into Okta.
