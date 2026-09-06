@@ -1,5 +1,8 @@
 # Iam-identity-automation
+
 Automated Joiner-Mover-Leaver (JML) identity lifecycle and access governance engine using PowerShell.
+
+---
 
 ## 1. Identity Data Modeling & HR Source of Truth
 
@@ -26,6 +29,8 @@ The schema accounts for core enterprise attributes, contract expiration boundari
 * **Manager Hierarchy (`ManagerEmail`):** Maps reporting lines required for automated access request routing, approval chains, and periodic access certifications.
 * **Intentional Data Quality Edge Cases:** Includes deliberate malformed data (e.g., `invalid-email-placeholder` on ID 1010) and expired contractor dates (e.g., ID 1008) to test script input validation, error handling, and security quarantine workflows.
 
+---
+
 ## 2. Okta Directory Schema Extension
 
 By default, standard Okta user profiles only support baseline identity attributes (Name, Email, Department, Title). To enforce lifecycle governance and time-bound access, I extended the Universal Directory schema via the Okta Profile Editor:
@@ -40,10 +45,15 @@ Extending the schema at the directory level ensures that the REST API payload is
 > **Technical Note / Schema Dependency:**  
 > In Okta, the API will reject any user payload containing undeclared profile attributes with an HTTP `400 Bad Request` error. Creating `contractEndDate` and `adminExpirationDate` inside Okta's Profile Editor first is a prerequisite; the directory schema must explicitly recognize these field names before the PowerShell script can write data to them.
 
+---
+
 ## 3. Privileged API Governance & Network Zone Allowlisting
+
 * **Operational Constraint:** Initial API token creation failed during service principal setup due to Okta's mandatory origin-network enforcement (`API calls made with this token must originate from`).
 * **Investigation & Security Principle:** Researching Okta's token governance model highlighted the requirement for **Defense-in-Depth** via **Network Zone IP binding**. Rather than treating API tokens as static bearer secrets, Okta requires privileged tokens to be bound to trusted administrative CIDR ranges or specific egress public IPs. This ensures that even if a token credential were leaked, unauthorized external API invocations from untrusted origins are blocked at the perimeter.
 * **Resolution:** Configured an authorized Okta Network Zone matching the administrative testing gateway, binding the token's origin scope strictly to trusted source IPs before executing automated provisioning calls.
+
+---
 
 ## 4. Automated Deprovisioning & Zombie Account Mitigation
 
@@ -74,6 +84,7 @@ Following execution, the directory state was audited via the Okta Admin API to v
 | **Wendy Testaburger** | `wtestaburger@southpark.local` | Full Stack Engineer (Contractor) | `2026-12-31` | `Pending user action` | Retained (Valid contract) |
 | **Stan Marsh** | `smarsh@southpark.local` | Account Rep (FTE) | None | `Pending user action` | Retained (Active FTE lifecycle) |
 
+---
 
 ## 5. Dynamic RBAC & Automated Group Synchronization
 
@@ -107,10 +118,10 @@ RBAC SYNCHRONIZATION COMPLETE
 
 ### Downstream SSO & Application Assignment
 Directly assigning individual users to SaaS applications creates operational debt and access sprawl. Access was instead scoped at the group level:
-
 * **Group-Based App Delivery:** Target applications (e.g., Bookmark / Internal Portal) are bound directly to the automated `Dept-IT` security group.
 * **Zero-Touch Provisioning:** As users transition into the IT department via the HR feed, `Sync-OktaRBAC.ps1` places them into `Dept-IT`, automatically granting application Single Sign-On (SSO) downstream without manual admin intervention.
 
+---
 
 ## 6. Privileged Access Governance & Granular RBAC Delegation
 
@@ -126,6 +137,7 @@ To enforce the **Principle of Least Privilege (PoLP)** and prevent administrativ
 * **Separation of Duties (SoD):** Granular role assignment prevents horizontal and vertical privilege escalation by ensuring team members only receive the permissions necessary for their direct workflows.
 * **Privileged Identity Management (PIM):** Combined with the schema extension attribute `adminExpirationDate`, elevated roles are tagged for periodic access certification or automatic revocation, avoiding permanent standing privileges.
 
+---
 
 ## 7. Automated Privilege Decay & Governance Enforcement
 
