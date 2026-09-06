@@ -7,25 +7,24 @@ To simulate an enterprise identity lifecycle engine (Joiner-Mover-Leaver), I des
 
 The schema accounts for core enterprise attributes, contract expiration boundaries, privileged flags, and deliberate edge cases to test automation error-handling:
 
-| EmployeeID | FirstName | LastName   | WorkEmail                   | Department  | JobTitle                 | EmploymentType | StartDate  | EndDate    | IsAdmin | PrivilegeDuration | ManagerEmail               |
-|------------|-----------|------------|-----------------------------|-------------|--------------------------|----------------|------------|------------|---------|-------------------|----------------------------|
-| 1001       | Stan      | Marsh      | smarsh@southpark.local      | Sales       | Account Rep              | FTE            | 2025-09-01 |            | FALSE   |                   | rmarsh@southpark.local     |
-| 1002       | Kyle      | Broflovski | kbroflovski@southpark.local | Finance     | Staff Accountant         | FTE            | 2025-09-01 |            | FALSE   |                   | gbroflovski@southpark.local|
-| 1003       | Eric      | Cartman    | ecartman@southpark.local    | IT          | Lead Systems Admin       | FTE            | 2024-01-15 |            | TRUE    |                   | rmarsh@southpark.local     |
-| 1004       | Kenny     | McCormick  | kmccormick@southpark.local  | IT          | Temp Systems Admin       | Contractor     | 2025-07-01 | 2026-12-31 | TRUE    | 30                | ecartman@southpark.local   |
-| 1005       | Butters   | Stotch     | bstotch@southpark.local     | IT          | Junior DevOps Engineer   | FTE            | 2025-09-01 |            | TRUE    |                   | ecartman@southpark.local   |
-| 1006       | Wendy     | Testaburger| wtestaburger@southpark.local| Engineering | Full Stack Engineer      | Contractor     | 2025-08-01 | 2026-12-31 | FALSE   |                   | ecartman@southpark.local   |
-| 1007       | Tolkien   | Black      | tblack@southpark.local      | Marketing   | Media Consultant         | Contractor     | 2025-01-10 | 2026-08-31 | FALSE   |                   | rmarsh@southpark.local     |
-| 1008       | Clyde     | Donovan    | cdonovan@southpark.local    | Support     | Customer Support Rep     | Contractor     | 2025-03-01 | 2026-05-01 | FALSE   |                   | rmarsh@southpark.local     |
-| 1009       | Randy     | Marsh      | rmarsh@southpark.local      | Operations  | Operations Director      | FTE            | 2023-05-15 |            | FALSE   |                   | executive@southpark.local  |
-| 1010       | Towelie   | Dryer      | invalid-email-placeholder   | Facilities  | Towel Consultant         | Contractor     | 2025-09-01 | 2026-09-15 | FALSE   |                   | rmarsh@southpark.local     |
+| EmployeeID | FirstName | LastName | WorkEmail | Department | JobTitle | EmploymentType | StartDate | EndDate | IsAdmin | PrivilegeDuration | ManagerEmail |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1001 | Stan | Marsh | smarsh@southpark.local | Sales | Account Rep | FTE | 2025-09-01 | | FALSE | | rmarsh@southpark.local |
+| 1002 | Kyle | Broflovski | kbroflovski@southpark.local | Finance | Staff Accountant | FTE | 2025-09-01 | | FALSE | | gbroflovski@southpark.local |
+| 1003 | Eric | Cartman | ecartman@southpark.local | IT | Lead Systems Admin | FTE | 2024-01-15 | | TRUE | | rmarsh@southpark.local |
+| 1004 | Kenny | McCormick | kmccormick@southpark.local | IT | Temp Systems Admin | Contractor | 2025-07-01 | 2026-12-31 | TRUE | 30 | ecartman@southpark.local |
+| 1005 | Butters | Stotch | bstotch@southpark.local | IT | Junior DevOps Engineer | FTE | 2025-09-01 | | TRUE | | ecartman@southpark.local |
+| 1006 | Wendy | Testaburger | wtestaburger@southpark.local | Engineering | Full Stack Engineer | Contractor | 2025-08-01 | 2026-12-31 | FALSE | | ecartman@southpark.local |
+| 1007 | Tolkien | Black | tblack@southpark.local | Marketing | Media Consultant | Contractor | 2025-01-10 | 2026-08-31 | FALSE | | rmarsh@southpark.local |
+| 1008 | Clyde | Donovan | cdonovan@southpark.local | Support | Customer Support Rep | Contractor | 2025-03-01 | 2026-05-01 | FALSE | | rmarsh@southpark.local |
+| 1009 | Randy | Marsh | rmarsh@southpark.local | Operations | Operations Director | FTE | 2023-05-15 | | FALSE | | executive@southpark.local |
+| 1010 | Towelie | Dryer | invalid-email-placeholder | Facilities | Towel Consultant | Contractor | 2025-09-01 | 2026-09-15 | FALSE | | rmarsh@southpark.local |
 
 ### Schema & Governance Logic
 * **JML Lifecycle Tracking (`StartDate` / `EndDate`):** Enables time-based automated provisioning for new hires and scheduled deprovisioning/account suspension for fixed-term contractors.
 * **Privilege & Least Privilege Flags (`IsAdmin`, `PrivilegeDuration`):** Distinguishes between standard business users and elevated access candidates. Includes temporary privilege duration logic for time-bound contractor access reviews.
 * **Manager Hierarchy (`ManagerEmail`):** Maps reporting lines required for automated access request routing, approval chains, and periodic access certifications.
 * **Intentional Data Quality Edge Cases:** Includes deliberate malformed data (e.g., `invalid-email-placeholder` on ID 1010) and expired contractor dates (e.g., ID 1008) to test script input validation, error handling, and security quarantine workflows.
-
 
 ## 2. Okta Directory Schema Extension
 
@@ -41,16 +40,14 @@ Extending the schema at the directory level ensures that the REST API payload is
 > **Technical Note / Schema Dependency:**  
 > In Okta, the API will reject any user payload containing undeclared profile attributes with an HTTP `400 Bad Request` error. Creating `contractEndDate` and `adminExpirationDate` inside Okta's Profile Editor first is a prerequisite; the directory schema must explicitly recognize these field names before the PowerShell script can write data to them.
 
-
 ## 3. Privileged API Governance & Network Zone Allowlisting
 * **Operational Constraint:** Initial API token creation failed during service principal setup due to Okta's mandatory origin-network enforcement (`API calls made with this token must originate from`).
 * **Investigation & Security Principle:** Researching Okta's token governance model highlighted the requirement for **Defense-in-Depth** via **Network Zone IP binding**. Rather than treating API tokens as static bearer secrets, Okta requires privileged tokens to be bound to trusted administrative CIDR ranges or specific egress public IPs. This ensures that even if a token credential were leaked, unauthorized external API invocations from untrusted origins are blocked at the perimeter.
 * **Resolution:** Configured an authorized Okta Network Zone matching the administrative testing gateway, binding the token's origin scope strictly to trusted source IPs before executing automated provisioning calls.
 
+## 4. Automated Deprovisioning & Zombie Account Mitigation
 
-  ## 4. Automated Deprovisioning & Zombie Account Mitigation
-
-To eliminate orphaned "zombie" accounts and enforce time-bound governance, `Revoke-StaleOktaUsers.ps1` evaluates directory identities against contract expiration timestamps and revokes access automatically.
+To eliminate orphaned "zombie" accounts and enforce time-bound governance, `Revoke-OktaAdminAuthority.ps1` evaluates directory identities against contract expiration timestamps and revokes access automatically.
 
 ### Automated Execution Log
 When executed, the engine queries the directory, parses the schema-extended `contractEndDate`, and triggers Okta's deactivation endpoint (`/api/v1/users/${id}/lifecycle/deactivate`) for expired accounts:
@@ -61,11 +58,21 @@ Evaluating 10 directory accounts against current date...
 [ACTIVE]      smarsh@southpark.local contract valid (FTE / Active).
 [EXPIRED]     tblack@southpark.local expired on 2025-08-31. Terminating access...
 [DEACTIVATED] Access successfully revoked for tblack@southpark.local
-[EXPIRED]     cclonovan@southpark.local expired on 2025-08-31. Terminating access...
-[DEACTIVATED] Access successfully revoked for cclonovan@southpark.local
+[EXPIRED]     cdonovan@southpark.local expired on 2025-08-31. Terminating access...
+[DEACTIVATED] Access successfully revoked for cdonovan@southpark.local
 
 Lifecycle audit complete.
+```
 
+### Directory Verification & State Transition
+Following execution, the directory state was audited via the Okta Admin API to verify that account lifecycles transitioned as intended:
+
+| Identity | Username | Role / Type | Contract End | Post-Execution Status | Result |
+|---|---|---|---|---|---|
+| **Tolkien Black** | `tblack@southpark.local` | Media Consultant (Contractor) | `2025-08-31` | `Deactivated` | Account terminated; all application access revoked |
+| **Clyde Donovan** | `cdonovan@southpark.local` | Customer Support Rep (Contractor) | `2025-08-31` | `Deactivated` | Account terminated; all application access revoked |
+| **Wendy Testaburger** | `wtestaburger@southpark.local` | Full Stack Engineer (Contractor) | `2026-12-31` | `Pending user action` | Retained (Valid contract) |
+| **Stan Marsh** | `smarsh@southpark.local` | Account Rep (FTE) | None | `Pending user action` | Retained (Active FTE lifecycle) |
 
 ## 5. Privileged Access Governance & Granular RBAC Delegation
 
@@ -80,7 +87,6 @@ To enforce the **Principle of Least Privilege (PoLP)** and prevent administrativ
 ### Architectural Takeaways:
 * **Separation of Duties (SoD):** Granular role assignment prevents horizontal and vertical privilege escalation by ensuring team members only receive the permissions necessary for their direct workflows.
 * **Privileged Identity Management (PIM):** Combined with the schema extension attribute `adminExpirationDate`, elevated roles are tagged for periodic access certification or automatic revocation, avoiding permanent standing privileges.
-
 
 ## 6. Automated Privilege Decay & Governance Enforcement
 
